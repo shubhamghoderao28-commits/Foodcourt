@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Your cart{% endblock %}
+{% block content %}
+<section class="page-intro"><p class="eyebrow">ALMOST THERE</p><h1>Your cart</h1><p>Double-check your picks before placing your demo order.</p></section>
+{% if lines %}
+<div class="cart-layout"><section class="cart-list">
+{% for item in lines %}
+  <article class="cart-item"><div class="cart-emoji">{{ item.emoji }}</div><div class="cart-name"><h3>{{ item.name }}</h3><p>₹{{ item.price }} each</p></div>
+    <div class="quantity"><button onclick="changeQty({{ item.id }}, {{ item.quantity - 1 }})">−</button><span>{{ item.quantity }}</span><button onclick="changeQty({{ item.id }}, {{ item.quantity + 1 }})">+</button></div>
+    <strong>₹{{ item.line_total }}</strong>
+  </article>
+{% endfor %}
+</section><aside class="summary"><h2>Order summary</h2><div class="summary-line"><span>Subtotal</span><span>₹{{ subtotal }}</span></div><div class="summary-line"><span>Delivery</span><span>{% if delivery_fee %}₹{{ delivery_fee }}{% else %}FREE{% endif %}</span></div><div class="summary-line total"><span>Total</span><strong>₹{{ total }}</strong></div>
+<form action="{{ url_for('checkout_form') }}" method="post" class="checkout-form"><label>Your name<input name="customer_name" required placeholder="e.g. Shubham"></label><label>Delivery address<input name="address" required placeholder="Street, area, city"></label><button class="btn full" type="submit">Place demo order</button></form><p class="fine-print">Demo checkout only. No payment is collected.</p></aside></div>
+{% else %}
+<div class="empty-state"><div>🛍️</div><h2>Your cart is taking a break</h2><p>Add a few dishes from the menu to get started.</p><a class="btn" href="{{ url_for('menu_page') }}">Browse menu</a></div>
+{% endif %}
+<script>
+async function changeQty(id, quantity) {
+  const response = await fetch('/api/cart/' + id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({quantity:Math.max(0, quantity)})});
+  if (response.ok) location.reload();
+  else { const data = await response.json(); alert(data.error); }
+}
+</script>
+{% endblock %}

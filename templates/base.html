@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}BiteBox{% endblock %} | BiteBox</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('home') }}"><span class="brand-mark">B</span> BiteBox</a>
+    <nav>
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('menu_page') }}">Menu</a>
+      <a href="{{ url_for('cart_page') }}">Cart</a>
+      <a href="{{ url_for('orders_page') }}">Orders</a>
+    </nav>
+  </header>
+  <main class="container">{% block content %}{% endblock %}</main>
+  <footer>Made for Flask + Git practice · Demo only, no real payments</footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Menu{% endblock %}
+{% block content %}
+<section class="page-intro"><p class="eyebrow">THE GOOD STUFF</p><h1>Explore the menu</h1><p>Find something delicious for your next break.</p></section>
+<form class="searchbar" method="get" action="{{ url_for('menu_page') }}">
+  <input name="q" value="{{ search }}" placeholder="Search dishes..." aria-label="Search dishes">
+  <select name="category" aria-label="Filter by category">
+    <option value="">All categories</option>
+    {% for category in categories %}<option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Search</button>
+</form>
+<section class="food-grid">
+{% for item in items %}
+  <article class="food-card">
+    <div class="food-emoji">{{ item.emoji }}</div>
+    <div class="food-info"><span class="category">{{ item.category }}</span><h3>{{ item.name }}</h3><p>{{ item.description }}</p>
+      <div class="card-bottom"><strong>₹{{ item.price }}</strong><button class="small-btn" onclick="addItem({{ item.id }})">+ Add</button></div>
+    </div>
+  </article>
+{% else %}
+  <div class="empty-state"><div>🔎</div><h3>No dishes found</h3><p>Try a different search or category.</p><a class="text-link" href="{{ url_for('menu_page') }}">Clear filters</a></div>
+{% endfor %}
+</section>
+<script>
+async function addItem(id) {
+  const response = await fetch('/api/cart', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({item_id:id, quantity:1})});
+  const data = await response.json();
+  alert(response.ok ? data.message : data.error);
+}
+</script>
+{% endblock %}

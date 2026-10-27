@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Order history{% endblock %}
+{% block content %}
+<section class="page-intro"><p class="eyebrow">YOUR BITES, YOUR HISTORY</p><h1>Recent orders</h1><p>Orders are stored in memory for this practice session and reset when Flask restarts.</p></section>
+{% if orders %}
+<section class="orders-list">
+{% for order in orders %}
+<article class="order-card"><div class="order-top"><div><span class="order-id">ORDER #{{ order.id }}</span><h3>{{ order.customer_name }}</h3><p>{{ order.created_at }} · {{ order.address }}</p></div><span class="status">{{ order.status }}</span></div>
+<div class="order-items">{% for item in order.items %}<span>{{ item.quantity }} × {{ item.name }}</span>{% endfor %}</div>
+<div class="order-total"><span>{{ order.items|length }} item type(s)</span><strong>₹{{ order.total }}</strong></div></article>
+{% endfor %}
+</section>
+{% else %}
+<div class="empty-state"><div>🧾</div><h2>No orders yet</h2><p>Your first order will show up here after checkout.</p><a class="btn" href="{{ url_for('menu_page') }}">Find your first bite</a></div>
+{% endif %}
+{% endblock %}
