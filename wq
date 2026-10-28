@@ -1,0 +1,202 @@
+[1mdiff --git a/app.py b/app.py[m
+[1mindex c5b187c..c6ac40e 100644[m
+[1m--- a/app.py[m
+[1m+++ b/app.py[m
+[36m@@ -187,75 +187,5 @@[m [mdef health():[m
+     return jsonify({"status": "ok", "service": "food-ordering-practice-api"})[m
+ [m
+ [m
+[31m-# -------------------------------------------------------------------[m
+[31m-# NEW FEATURE FOR GIT PRACTICE: Offers API + Deals HTML page[m
+[31m-# Added without replacing the existing menu, cart, or checkout routes.[m
+[31m-# -------------------------------------------------------------------[m
+[31m-[m
+[31m-OFFERS = [[m
+[31m-    {[m
+[31m-        "code": "BITE10",[m
+[31m-        "title": "10% off your order",[m
+[31m-        "description": "Save 10% on eligible orders.",[m
+[31m-        "discount_percent": 10,[m
+[31m-        "minimum_order": 199,[m
+[31m-        "category": "General",[m
+[31m-    },[m
+[31m-    {[m
+[31m-        "code": "LUNCH50",[m
+[31m-        "title": "₹50 off lunch",[m
+[31m-        "description": "Get ₹50 off when your order reaches ₹399.",[m
+[31m-        "discount_amount": 50,[m
+[31m-        "minimum_order": 399,[m
+[31m-        "category": "Lunch",[m
+[31m-    },[m
+[31m-    {[m
+[31m-        "code": "SWEET20",[m
+[31m-        "title": "Dessert special",[m
+[31m-        "description": "Save 20% on eligible dessert orders.",[m
+[31m-        "discount_percent": 20,[m
+[31m-        "minimum_order": 149,[m
+[31m-        "category": "Desserts",[m
+[31m-    },[m
+[31m-][m
+[31m-[m
+[31m-[m
+[31m-@app.get("/api/offers")[m
+[31m-def api_offers():[m
+[31m-    """Return offers as JSON. Optional filter: /api/offers?min_order=300"""[m
+[31m-    try:[m
+[31m-        min_order = int(request.args.get("min_order", 0))[m
+[31m-    except ValueError:[m
+[31m-        return jsonify({"error": "min_order must be an integer"}), 400[m
+[31m-[m
+[31m-    if min_order < 0:[m
+[31m-        return jsonify({"error": "min_order cannot be negative"}), 400[m
+[31m-[m
+[31m-    matching_offers = [[m
+[31m-        offer for offer in OFFERS[m
+[31m-        if offer["minimum_order"] >= min_order[m
+[31m-    ][m
+[31m-    return jsonify({"count": len(matching_offers), "offers": matching_offers})[m
+[31m-[m
+[31m-[m
+[31m-@app.get("/api/offers/<string:offer_code>")[m
+[31m-def api_offer_details(offer_code):[m
+[31m-    """Return one offer by code, e.g. /api/offers/BITE10."""[m
+[31m-    offer = next([m
+[31m-        (item for item in OFFERS if item["code"].lower() == offer_code.lower()),[m
+[31m-        None,[m
+[31m-    )[m
+[31m-    if offer is None:[m
+[31m-        return jsonify({"error": "Offer not found"}), 404[m
+[31m-    return jsonify(offer)[m
+[31m-[m
+[31m-[m
+[31m-@app.get("/deals")[m
+[31m-def deals_page():[m
+[31m-    """Render the Deals page; the page fetches data from /api/offers."""[m
+[31m-    return render_template("deals.html")[m
+[31m-[m
+[31m-[m
+[31m-[m
+ if __name__ == "__main__":[m
+     app.run(debug=True, port=5000)[m
+[1mdiff --git a/templates/base.html b/templates/base.html[m
+[1mindex 2baa846..0aeec8f 100644[m
+[1m--- a/templates/base.html[m
+[1m+++ b/templates/base.html[m
+[36m@@ -14,7 +14,6 @@[m
+       <a href="{{ url_for('menu_page') }}">Menu</a>[m
+       <a href="{{ url_for('cart_page') }}">Cart</a>[m
+       <a href="{{ url_for('orders_page') }}">Orders</a>[m
+[31m-      <a href="{{ url_for('deals_page') }}">Deals</a>[m
+     </nav>[m
+   </header>[m
+   <main class="container">{% block content %}{% endblock %}</main>[m
+[1mdiff --git a/templates/deals.html b/templates/deals.html[m
+[1mdeleted file mode 100644[m
+[1mindex d5b2923..0000000[m
+[1m--- a/templates/deals.html[m
+[1m+++ /dev/null[m
+[36m@@ -1,104 +0,0 @@[m
+[31m-{% extends "base.html" %}[m
+[31m-{% block title %}Deals & Offers{% endblock %}[m
+[31m-{% block content %}[m
+[31m-<section class="page-intro">[m
+[31m-  <p class="eyebrow">SAVE ON YOUR NEXT BITE</p>[m
+[31m-  <h1>Deals & Offers</h1>[m
+[31m-  <p>This page loads offers dynamically from the Flask API at <code>/api/offers</code>.</p>[m
+[31m-</section>[m
+[31m-[m
+[31m-<section style="margin:24px 0">[m
+[31m-  <form id="offer-filter" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">[m
+[31m-    <label for="min-order">Minimum order value (₹)</label>[m
+[31m-    <input id="min-order" type="number" min="0" value="0"[m
+[31m-           style="padding:11px;border:1px solid #ddd;border-radius:8px;width:150px">[m
+[31m-    <button type="submit" class="btn">Filter offers</button>[m
+[31m-  </form>[m
+[31m-</section>[m
+[31m-[m
+[31m-<p id="offers-status" role="status">Loading offers...</p>[m
+[31m-<section id="offers-list" class="food-grid" aria-live="polite"></section>[m
+[31m-[m
+[31m-<script>[m
+[31m-const offersStatus = document.getElementById("offers-status");[m
+[31m-const offersList = document.getElementById("offers-list");[m
+[31m-const minOrderInput = document.getElementById("min-order");[m
+[31m-[m
+[31m-async function loadOffers() {[m
+[31m-  offersStatus.textContent = "Loading offers...";[m
+[31m-  offersList.replaceChildren();[m
+[31m-[m
+[31m-  const minOrder = Number(minOrderInput.value || 0);[m
+[31m-  if (!Number.isInteger(minOrder) || minOrder < 0) {[m
+[31m-    offersStatus.textContent = "Enter a valid non-negative minimum order value.";[m
+[31m-    return;[m
+[31m-  }[m
+[31m-[m
+[31m-  try {[m
+[31m-    const response = await fetch(`/api/offers?min_order=${encodeURIComponent(minOrder)}`);[m
+[31m-    const data = await response.json();[m
+[31m-    if (!response.ok) throw new Error(data.error || "Could not load offers");[m
+[31m-[m
+[31m-    if (data.offers.length === 0) {[m
+[31m-      offersStatus.textContent = "No offers match this filter.";[m
+[31m-      return;[m
+[31m-    }[m
+[31m-[m
+[31m-    offersStatus.textContent = `${data.count} offer(s) available.`;[m
+[31m-[m
+[31m-    for (const offer of data.offers) {[m
+[31m-      const card = document.createElement("article");[m
+[31m-      card.className = "food-card";[m
+[31m-      card.style.padding = "20px";[m
+[31m-[m
+[31m-      const category = document.createElement("span");[m
+[31m-      category.className = "category";[m
+[31m-      category.textContent = offer.category;[m
+[31m-[m
+[31m-      const title = document.createElement("h3");[m
+[31m-      title.textContent = offer.title;[m
+[31m-[m
+[31m-      const description = document.createElement("p");[m
+[31m-      description.textContent = offer.description;[m
+[31m-[m
+[31m-      const code = document.createElement("strong");[m
+[31m-      code.textContent = `Code: ${offer.code}`;[m
+[31m-      code.style.cssText = "display:inline-block;background:#e7f2bd;color:#174c35;padding:8px 10px;border-radius:8px";[m
+[31m-[m
+[31m-      const minimum = document.createElement("p");[m
+[31m-      minimum.textContent = `Minimum order: ₹${offer.minimum_order}`;[m
+[31m-[m
+[31m-      const detailsButton = document.createElement("button");[m
+[31m-      detailsButton.type = "button";[m
+[31m-      detailsButton.className = "small-btn";[m
+[31m-      detailsButton.textContent = "View API JSON";[m
+[31m-      detailsButton.style.marginTop = "12px";[m
+[31m-      detailsButton.addEventListener("click", () => showOfferDetails(offer.code));[m
+[31m-[m
+[31m-      card.append(category, title, description, code, minimum, detailsButton);[m
+[31m-      offersList.append(card);[m
+[31m-    }[m
+[31m-  } catch (error) {[m
+[31m-    offersStatus.textContent = `Error: ${error.message}`;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-async function showOfferDetails(code) {[m
+[31m-  try {[m
+[31m-    const response = await fetch(`/api/offers/${encodeURIComponent(code)}`);[m
+[31m-    const data = await response.json();[m
+[31m-    if (!response.ok) throw new Error(data.error || "Could not load offer");[m
+[31m-    alert(JSON.stringify(data, null, 2));[m
+[31m-  } catch (error) {[m
+[31m-    alert(error.message);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-document.getElementById("offer-filter").addEventListener("submit", event => {[m
+[31m-  event.preventDefault();[m
+[31m-  loadOffers();[m
+[31m-});[m
+[31m-[m
+[31m-loadOffers();[m
+[31m-</script>[m
+[31m-{% endblock %}[m
