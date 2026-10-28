@@ -1,0 +1,274 @@
+ {% extends "base.html" %}
+
+{% block title %}99 Deals{% endblock %}
+
+{% block content %}
+<style>
+    .deals-header {
+        text-align: center;
+        padding: 28px 16px;
+        margin-bottom: 24px;
+        border-radius: 16px;
+        background: #fff0dc;
+        color: #7c2d12;
+    }
+
+    .deals-header h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+    }
+
+    .deals-header p {
+        margin: 0;
+    }
+
+    .deals-toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .deals-toolbar input,
+    .deals-toolbar select {
+        padding: 11px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+    }
+
+    .deals-toolbar input {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .deals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+    }
+
+    .deal-card {
+        padding: 20px;
+        border: 1px solid #eee;
+        border-radius: 14px;
+        background: white;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    .deal-emoji {
+        font-size: 48px;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .deal-category {
+        color: #777;
+        font-size: 13px;
+    }
+
+    .deal-card h3 {
+        margin: 8px 0;
+    }
+
+    .deal-description {
+        color: #666;
+        min-height: 42px;
+        font-size: 14px;
+    }
+
+    .deal-price {
+        font-size: 23px;
+        font-weight: bold;
+        color: #15803d;
+    }
+
+    .old-price {
+        color: #888;
+        text-decoration: line-through;
+        margin-left: 8px;
+    }
+
+    .discount {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 5px 9px;
+        border-radius: 20px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .refresh-button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #ea580c;
+        color: white;
+        cursor: pointer;
+    }
+
+    #status {
+        margin: 16px 0;
+        color: #666;
+    }
+</style>
+
+<section class="deals-header">
+    <h1>🔥 99 Deals</h1>
+    <p>Your favourite bites at special prices.</p>
+</section>
+
+<div class="deals-toolbar">
+    <input
+        type="search"
+        id="searchInput"
+        placeholder="Search deals..."
+        aria-label="Search deals"
+    >
+
+    <select id="categoryFilter" aria-label="Filter by category">
+        <option value="all">All categories</option>
+    </select>
+
+    <button class="refresh-button" id="refreshButton">
+        Refresh Deals
+    </button>
+</div>
+
+<p id="status" role="status">Loading deals...</p>
+<section id="dealsContainer" class="deals-grid"></section>
+
+<script>
+    let allDeals = [];
+
+    const container = document.getElementById("dealsContainer");
+    const statusText = document.getElementById("status");
+    const searchInput = document.getElementById("searchInput");
+    const categoryFilter = document.getElementById("categoryFilter");
+
+    async function loadDeals() {
+        statusText.textContent = "Loading deals...";
+        container.replaceChildren();
+
+        try {
+            const response = await fetch("/api/99-deals");
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch deals");
+            }
+
+            const data = await response.json();
+            allDeals = data.deals;
+
+            populateCategories();
+            renderDeals();
+
+        } catch (error) {
+            statusText.textContent =
+                "Unable to load deals. Check whether Flask is running.";
+            console.error(error);
+        }
+    }
+
+    function populateCategories() {
+        const categories = [
+            ...new Set(allDeals.map(deal => deal.category))
+        ];
+
+        categoryFilter.replaceChildren();
+
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = "All categories";
+        categoryFilter.appendChild(allOption);
+
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+    }
+
+    function renderDeals() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const selectedCategory = categoryFilter.value;
+
+        const filteredDeals = allDeals.filter(deal => {
+            const matchesSearch =
+                deal.name.toLowerCase().includes(searchTerm) ||
+                deal.description.toLowerCase().includes(searchTerm);
+
+            const matchesCategory =
+                selectedCategory === "all" ||
+                deal.category === selectedCategory;
+
+            return matchesSearch && matchesCategory;
+        });
+
+        container.replaceChildren();
+
+        statusText.textContent =
+            `${filteredDeals.length} deal(s) found`;
+
+        if (filteredDeals.length === 0) {
+            statusText.textContent = "No matching deals found.";
+            return;
+        }
+
+        filteredDeals.forEach(deal => {
+            const card = document.createElement("article");
+            card.className = "deal-card";
+
+            const emoji = document.createElement("div");
+            emoji.className = "deal-emoji";
+            emoji.textContent = deal.emoji;
+
+            const category = document.createElement("div");
+            category.className = "deal-category";
+            category.textContent = deal.category;
+
+            const name = document.createElement("h3");
+            name.textContent = deal.name;
+
+            const description = document.createElement("p");
+            description.className = "deal-description";
+            description.textContent = deal.description;
+
+            const price = document.createElement("div");
+            price.className = "deal-price";
+            price.textContent = `₹${deal.deal_price}`;
+
+            const oldPrice = document.createElement("span");
+            oldPrice.className = "old-price";
+            oldPrice.style.fontSize = "14px";
+            oldPrice.textContent = `₹${deal.original_price}`;
+            price.appendChild(oldPrice);
+
+            const discount = document.createElement("span");
+            discount.className = "discount";
+            discount.textContent = `${deal.discount}% OFF`;
+
+            card.append(
+                emoji,
+                category,
+                name,
+                description,
+                price,
+                discount
+            );
+
+            container.appendChild(card);
+        });
+    }
+
+    searchInput.addEventListener("input", renderDeals);
+    categoryFilter.addEventListener("change", renderDeals);
+    document.getElementById("refreshButton")
+        .addEventListener("click", loadDeals);
+
+    loadDeals();
+</script>
+{% endblock %}

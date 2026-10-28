@@ -255,6 +255,98 @@ def deals_page():
     """Render the Deals page; the page fetches data from /api/offers."""
     return render_template("deals.html")
 
+# ==========================================
+# NEW FEATURE: 99 Deals API
+# ==========================================
+
+DEALS_99 = [
+    {
+        "id": 1,
+        "name": "Classic Veg Burger",
+        "category": "Fast Food",
+        "original_price": 149,
+        "deal_price": 99,
+        "discount": 34,
+        "description": "A delicious veggie burger with crispy lettuce and sauce.",
+        "emoji": "🍔"
+    },
+    {
+        "id": 2,
+        "name": "Margherita Pizza",
+        "category": "Pizza",
+        "original_price": 199,
+        "deal_price": 99,
+        "discount": 50,
+        "description": "Classic pizza topped with cheese and fresh basil.",
+        "emoji": "🍕"
+    },
+    {
+        "id": 3,
+        "name": "Paneer Wrap",
+        "category": "Indian",
+        "original_price": 179,
+        "deal_price": 99,
+        "discount": 45,
+        "description": "Spicy paneer wrapped in a soft tortilla.",
+        "emoji": "🌯"
+    },
+    {
+        "id": 4,
+        "name": "Chocolate Brownie",
+        "category": "Dessert",
+        "original_price": 129,
+        "deal_price": 99,
+        "discount": 23,
+        "description": "A rich, soft chocolate brownie.",
+        "emoji": "🍫"
+    },
+    {
+        "id": 5,
+        "name": "Masala Fries",
+        "category": "Snacks",
+        "original_price": 119,
+        "deal_price": 99,
+        "discount": 17,
+        "description": "Golden fries tossed with Indian masala.",
+        "emoji": "🍟"
+    }
+]
+
+
+# API: Return all 99 Deals
+@app.get("/api/99-deals")
+def api_99_deals():
+    return jsonify({
+        "success": True,
+        "count": len(DEALS_99),
+        "deals": DEALS_99
+    })
+
+
+# API: Return one deal by ID
+@app.get("/api/99-deals/<int:deal_id>")
+def api_99_deal_detail(deal_id):
+    deal = next(
+        (item for item in DEALS_99 if item["id"] == deal_id),
+        None
+    )
+
+    if deal is None:
+        return jsonify({
+            "success": False,
+            "message": "Deal not found"
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "deal": deal
+    })
+
+
+# HTML page: Display 99 Deals
+@app.get("/99-deals")
+def deals_99_page():
+    return render_template("99_deals.html")
 
 
 if __name__ == "__main__":
