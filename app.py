@@ -187,5 +187,75 @@ def health():
     return jsonify({"status": "ok", "service": "food-ordering-practice-api"})
 
 
+# -------------------------------------------------------------------
+# NEW FEATURE FOR GIT PRACTICE: Offers API + Deals HTML page
+# Added without replacing the existing menu, cart, or checkout routes.
+# -------------------------------------------------------------------
+
+OFFERS = [
+    {
+        "code": "BITE10",
+        "title": "10% off your order",
+        "description": "Save 10% on eligible orders.",
+        "discount_percent": 10,
+        "minimum_order": 199,
+        "category": "General",
+    },
+    {
+        "code": "LUNCH50",
+        "title": "₹50 off lunch",
+        "description": "Get ₹50 off when your order reaches ₹399.",
+        "discount_amount": 50,
+        "minimum_order": 399,
+        "category": "Lunch",
+    },
+    {
+        "code": "SWEET20",
+        "title": "Dessert special",
+        "description": "Save 20% on eligible dessert orders.",
+        "discount_percent": 20,
+        "minimum_order": 149,
+        "category": "Desserts",
+    },
+]
+
+
+@app.get("/api/offers")
+def api_offers():
+    """Return offers as JSON. Optional filter: /api/offers?min_order=300"""
+    try:
+        min_order = int(request.args.get("min_order", 0))
+    except ValueError:
+        return jsonify({"error": "min_order must be an integer"}), 400
+
+    if min_order < 0:
+        return jsonify({"error": "min_order cannot be negative"}), 400
+
+    matching_offers = [
+        offer for offer in OFFERS
+        if offer["minimum_order"] >= min_order
+    ]
+    return jsonify({"count": len(matching_offers), "offers": matching_offers})
+
+
+@app.get("/api/offers/<string:offer_code>")
+def api_offer_details(offer_code):
+    """Return one offer by code, e.g. /api/offers/BITE10."""
+    offer = next(
+        (item for item in OFFERS if item["code"].lower() == offer_code.lower()),
+        None,
+    )
+    if offer is None:
+        return jsonify({"error": "Offer not found"}), 404
+    return jsonify(offer)
+
+
+@app.get("/deals")
+def deals_page():
+    """Render the Deals page; the page fetches data from /api/offers."""
+    return render_template("deals.html")
+
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
