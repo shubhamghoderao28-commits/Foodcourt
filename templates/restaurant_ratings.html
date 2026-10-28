@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Restaurant Ratings{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">COMMUNITY PICKS</p>
+  <h1>Restaurant Ratings</h1>
+  <p>Compare restaurant ratings and review counts. This page loads data from your Flask JSON API.</p>
+</section>
+
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:24px 0">
+  <button id="load-ratings" class="btn" type="button">Load restaurant ratings</button>
+  <span id="ratings-status" role="status">Press the button to load ratings.</span>
+</div>
+
+<section id="ratings-grid" class="food-grid" aria-live="polite"></section>
+
+<script>
+const loadButton = document.getElementById("load-ratings");
+const statusMessage = document.getElementById("ratings-status");
+const ratingsGrid = document.getElementById("ratings-grid");
+
+loadButton.addEventListener("click", loadRatings);
+
+async function loadRatings() {
+  loadButton.disabled = true;
+  statusMessage.textContent = "Loading ratings...";
+  ratingsGrid.replaceChildren();
+
+  try {
+    const response = await fetch("/api/restaurant-ratings");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to load ratings.");
+    }
+
+    statusMessage.textContent = `${data.count} restaurant(s) found.`;
+
+    for (const restaurant of data.restaurants) {
+      const card = document.createElement("article");
+      card.className = "food-card";
+      card.style.padding = "20px";
+
+      const name = document.createElement("h3");
+      name.textContent = restaurant.name;
+
+      const cuisine = document.createElement("p");
+      cuisine.textContent = `Cuisine: ${restaurant.cuisine}`;
+
+      const rating = document.createElement("p");
+      rating.textContent = `⭐ ${restaurant.rating.toFixed(1)} / 5`;
+
+      const reviews = document.createElement("p");
+      reviews.textContent = `${restaurant.review_count} reviews`;
+
+      card.append(name, cuisine, rating, reviews);
+      ratingsGrid.append(card);
+    }
+  } catch (error) {
+    statusMessage.textContent = `Error: ${error.message}`;
+  } finally {
+    loadButton.disabled = false;
+  }
+}
+</script>
+{% endblock %}

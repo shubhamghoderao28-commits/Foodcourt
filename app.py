@@ -349,5 +349,55 @@ def deals_99_page():
     return render_template("99_deals.html")
 
 
+# NEW FEATURE: Restaurant Ratings API
+
+RESTAURANTS = [
+    {
+        "id": 1,
+        "name": "Green Leaf Kitchen",
+        "cuisine": "Indian",
+        "rating": 4.7,
+        "review_count": 320
+    },
+    {
+        "id": 2,
+        "name": "Urban Pizza House",
+        "cuisine": "Italian",
+        "rating": 4.4,
+        "review_count": 215
+    },
+    {
+        "id": 3,
+        "name": "Wok Express",
+        "cuisine": "Asian",
+        "rating": 4.2,
+        "review_count": 178
+    },
+    {
+        "id": 4,
+        "name": "Sweet Cravings",
+        "cuisine": "Desserts",
+        "rating": 4.8,
+        "review_count": 410
+    }
+]
+
+
+@app.get("/api/restaurant-ratings")
+def api_restaurant_ratings():
+    """Return restaurant ratings as JSON."""
+    return jsonify({
+        "count": len(RESTAURANTS),
+        "restaurants": RESTAURANTS
+    })
+
+
+@app.get("/restaurant-ratings")
+def restaurant_ratings_page():
+    """Render the Restaurant Ratings HTML page."""
+    return render_template("restaurant_ratings.html")
+
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
